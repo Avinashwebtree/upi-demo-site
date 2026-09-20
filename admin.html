@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UPI Demo — Transaction Log</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f6f8; margin: 0; padding: 24px 16px; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 20px; }
+  .key-row { display: flex; gap: 8px; margin-bottom: 20px; }
+  .key-row input { flex: 1; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 8px; }
+  .key-row button { padding: 10px 16px; border: none; border-radius: 8px; background: #5b21b6; color: white; font-weight: 600; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  th, td { text-align: left; padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
+  th { background: #fafafa; color: #6b7280; }
+  .total { font-size: 14px; font-weight: 700; margin: 16px 0; }
+  .empty { color: #6b7280; font-size: 13px; padding: 20px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Transaction Log (self-reported)</h1>
+  <div class="key-row">
+    <input type="password" id="adminKey" placeholder="Admin key">
+    <button onclick="load()">Load</button>
+  </div>
+  <div id="totalWrap"></div>
+  <div id="content"></div>
+</div>
+<script>
+  async function load() {
+    const key = document.getElementById('adminKey').value;
+    localStorage.setItem('upi_admin_key', key);
+    const res = await fetch('/api/transactions?key=' + encodeURIComponent(key));
+    const content = document.getElementById('content');
+    const totalWrap = document.getElementById('totalWrap');
+    if (!res.ok) {
+      content.innerHTML = '<div class="empty">Unauthorized or server error</div>';
+      totalWrap.innerHTML = '';
+      return;
+    }
+    const list = await res.json();
+    if (!list.length) {
+      content.innerHTML = '<div class="empty">No transactions logged yet</div>';
+      totalWrap.innerHTML = '';
+      return;
+    }
+    const total = list.reduce((sum, t) => sum + t.amount, 0);
+    totalWrap.innerHTML = `<div class="total">Total reported: ₹${total.toFixed(2)} across ${list.length} entr${list.length === 1 ? 'y' : 'ies'}</div>`;
+    let rows = list.map(t => `
+      <tr>
+        <td>${new Date(t.createdAt).toLocaleString()}</td>
+        <td>₹${t.amount.toFixed(2)}</td>
+        <td>${t.note || ''}</td>
+        <td>${t.status}</td>
+      </tr>
+    `).join('');
+    content.innerHTML = `<table><thead><tr><th>Time</th><th>Amount</th><th>Note</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  const saved = localStorage.getItem('upi_admin_key');
+  if (saved) {
+    document.getElementById('adminKey').value = saved;
+    load();
+  }
+</script>
+</body>
+</html>
