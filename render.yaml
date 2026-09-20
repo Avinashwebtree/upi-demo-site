@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: upi-demo-site
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ADMIN_KEY
+        sync: false
+    disk:
+      name: upi-demo-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
