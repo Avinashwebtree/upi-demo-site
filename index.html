@@ -3,156 +3,323 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UPI Pay Demo</title>
+<title>Pay via UPI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root {
-    --bg: #f5f6f8;
+    --bg-1: #0f0c29;
+    --bg-2: #302b63;
+    --bg-3: #24243e;
     --card: #ffffff;
-    --text: #1a1a1a;
+    --text: #14141f;
     --muted: #6b7280;
-    --accent: #5b21b6;
-    --accent-dark: #4c1d95;
-    --border: #e5e7eb;
+    --accent: #6d28d9;
+    --accent-2: #9333ea;
+    --border: #eceef2;
+    --success: #16a34a;
   }
   * { box-sizing: border-box; }
+  html, body { height: 100%; }
   body {
     margin: 0;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(circle at 20% 20%, #4c1d95 0%, transparent 45%),
+                radial-gradient(circle at 80% 0%, #7c3aed 0%, transparent 40%),
+                linear-gradient(160deg, var(--bg-1), var(--bg-2) 55%, var(--bg-3));
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: var(--text);
-    padding: 24px 16px;
+    padding: 32px 16px;
   }
+
   .card {
+    position: relative;
     background: var(--card);
-    border-radius: 16px;
-    padding: 32px 24px;
-    max-width: 380px;
+    border-radius: 28px;
+    padding: 36px 28px 30px;
+    max-width: 400px;
     width: 100%;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    text-align: center;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
+    overflow: hidden;
   }
-  h1 { font-size: 20px; margin: 0 0 4px; }
-  .subtitle { color: var(--muted); font-size: 13px; margin: 0 0 24px; }
-  .vpa {
-    display: inline-block;
-    background: #f3f0fb;
+
+  .card::before {
+    content: "";
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 180px;
+    height: 180px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-radius: 50%;
+    opacity: 0.12;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f4f1fb;
     color: var(--accent);
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     padding: 6px 12px;
     border-radius: 999px;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
   }
+  .badge .pulse {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 0 0 rgba(22,163,74,0.6);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(22,163,74,0.5); }
+    70% { box-shadow: 0 0 0 7px rgba(22,163,74,0); }
+    100% { box-shadow: 0 0 0 0 rgba(22,163,74,0); }
+  }
+
+  h1 { font-size: 22px; font-weight: 800; margin: 0 0 4px; letter-spacing: -0.02em; }
+  .subtitle { color: var(--muted); font-size: 13.5px; margin: 0 0 14px; }
+
+  .payee-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #faf9fc;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 14px;
+    margin-bottom: 24px;
+  }
+  .payee-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px;
+    flex-shrink: 0;
+  }
+  .payee-info { text-align: left; overflow: hidden; }
+  .payee-info .label { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .payee-info .vpa { font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
   label {
     display: block;
     text-align: left;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
     color: var(--muted);
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
+
   .amount-wrap {
     display: flex;
     align-items: center;
+    justify-content: center;
     border: 1.5px solid var(--border);
-    border-radius: 12px;
-    padding: 10px 14px;
-    margin-bottom: 14px;
+    border-radius: 16px;
+    padding: 18px 16px;
+    margin-bottom: 12px;
+    background: #fcfbfe;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
-  .amount-wrap span { font-size: 18px; font-weight: 600; margin-right: 6px; color: var(--muted); }
+  .amount-wrap:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(109,40,217,0.08);
+  }
+  .amount-wrap span { font-size: 26px; font-weight: 700; margin-right: 4px; color: var(--muted); }
   .amount-wrap input {
     border: none;
     outline: none;
-    font-size: 18px;
-    font-weight: 600;
+    background: transparent;
+    font-size: 30px;
+    font-weight: 800;
     width: 100%;
+    text-align: center;
     color: var(--text);
+    font-family: inherit;
   }
-  input[type=text] {
+  .amount-wrap input::placeholder { color: #d1d5db; }
+
+  .quick-amounts {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .chip {
+    flex: 1;
+    padding: 9px 0;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: white;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.12s ease;
+  }
+  .chip:active, .chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  input[type=text].note-input {
     width: 100%;
-    padding: 10px 14px;
+    padding: 12px 14px;
     border: 1.5px solid var(--border);
     border-radius: 12px;
     font-size: 14px;
-    margin-bottom: 18px;
+    margin-bottom: 22px;
     outline: none;
+    font-family: inherit;
+    transition: border-color 0.15s ease;
   }
-  button {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 12px;
-    background: var(--accent);
-    color: white;
-    font-size: 15px;
+  input[type=text].note-input:focus { border-color: var(--accent); }
+
+  .section-label {
+    text-align: left;
+    font-size: 12px;
     font-weight: 700;
-    cursor: pointer;
-    transition: background 0.15s ease;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
   }
-  button:active { background: var(--accent-dark); }
-  button:disabled { background: #c4b8e8; cursor: not-allowed; }
-  #qrWrap { margin-top: 22px; display: none; }
-  #qrWrap canvas { border-radius: 12px; border: 1px solid var(--border); }
-  #qrHint { font-size: 12px; color: var(--muted); margin-top: 10px; }
-  .divider { display: flex; align-items: center; margin: 20px 0; color: var(--muted); font-size: 12px; }
-  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
-  .divider span { padding: 0 10px; }
-  .footer-note { font-size: 11px; color: var(--muted); margin-top: 20px; line-height: 1.5; }
-  .app-buttons { display: flex; flex-direction: column; gap: 10px; }
+
+  .app-buttons { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
   .app-btn {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 13px;
+    gap: 12px;
+    padding: 13px 16px;
     border: 1.5px solid var(--border);
-    border-radius: 12px;
+    border-radius: 14px;
     background: white;
     color: var(--text);
-    font-size: 14px;
+    font-size: 14.5px;
     font-weight: 600;
     cursor: pointer;
     text-decoration: none;
+    text-align: left;
+    transition: transform 0.08s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    font-family: inherit;
+    width: 100%;
   }
-  .app-btn:active { background: #f3f0fb; }
-  .app-btn .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .app-btn:hover { border-color: #ddd6f5; box-shadow: 0 4px 14px rgba(109,40,217,0.08); }
+  .app-btn:active { transform: scale(0.98); background: #faf9fc; }
+  .app-btn .icon {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    font-weight: 800;
+    color: white;
+    flex-shrink: 0;
+  }
+  .app-btn .arrow { margin-left: auto; color: #c9c6d6; font-size: 16px; }
+
+  .divider { display: flex; align-items: center; margin: 24px 0 18px; color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+  .divider span { padding: 0 12px; }
+
+  .qr-btn {
+    width: 100%;
+    padding: 14px;
+    border: 1.5px dashed #ddd6f5;
+    border-radius: 14px;
+    background: #faf9fc;
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .qr-btn:active { background: #f4f1fb; }
+
+  #qrWrap { margin-top: 20px; display: none; text-align: center; animation: fadeIn 0.25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  #qrCanvas {
+    display: inline-flex;
+    padding: 14px;
+    background: white;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  }
+  #qrHint { font-size: 12px; color: var(--muted); margin-top: 12px; }
+
+  .footer-note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 22px;
+    line-height: 1.6;
+    text-align: left;
+    background: #faf9fc;
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .footer-note code { background: #f0edf7; padding: 1px 5px; border-radius: 5px; }
+
+  @media (max-width: 380px) {
+    .card { padding: 28px 20px 24px; border-radius: 22px; }
+    .amount-wrap input { font-size: 26px; }
+  }
 </style>
 </head>
 <body>
   <div class="card">
+    <div class="badge"><span class="pulse"></span>Demo payment page</div>
     <h1>Pay via UPI</h1>
-    <p class="subtitle">Demo payment page — pay directly to</p>
-    <div class="vpa">avinash.sonagari-2@okhdfcbank</div>
+    <p class="subtitle">Enter an amount and pay directly using any UPI app</p>
 
-    <label for="amount">Amount (₹)</label>
+    <div class="payee-row">
+      <div class="payee-avatar">AS</div>
+      <div class="payee-info">
+        <div class="label">Paying to</div>
+        <div class="vpa">avinash.sonagari-2@okhdfcbank</div>
+      </div>
+    </div>
+
+    <label for="amount">Amount</label>
     <div class="amount-wrap">
       <span>₹</span>
       <input type="number" id="amount" placeholder="0" min="1" step="0.01" inputmode="decimal">
     </div>
+    <div class="quick-amounts">
+      <button type="button" class="chip" data-amt="50">₹50</button>
+      <button type="button" class="chip" data-amt="100">₹100</button>
+      <button type="button" class="chip" data-amt="200">₹200</button>
+      <button type="button" class="chip" data-amt="500">₹500</button>
+    </div>
 
     <label for="note">Note (optional)</label>
-    <input type="text" id="note" placeholder="e.g. Demo payment">
+    <input type="text" id="note" class="note-input" placeholder="e.g. Demo payment">
 
+    <div class="section-label">Pay with</div>
     <div id="appButtons" class="app-buttons"></div>
 
-    <div class="divider"><span>or scan QR</span></div>
-    <button id="qrBtn" style="background:#111827">Show QR Code</button>
+    <div class="divider"><span>or scan to pay</span></div>
+    <button type="button" id="qrBtn" class="qr-btn">Show QR Code</button>
 
     <div id="qrWrap">
-      <div id="qrCanvas" style="display:flex;justify-content:center"></div>
-      <p id="qrHint">Scan with any UPI app (GPay, PhonePe, Paytm, BHIM...)</p>
+      <div id="qrCanvas"></div>
+      <p id="qrHint">Scan with any UPI app — GPay, PhonePe, Paytm, BHIM...</p>
     </div>
 
     <p class="footer-note">
-      Tapping "Pay" logs this attempt (amount + note, self-reported only)
-      and opens your device's UPI app via a standard <code>upi://pay</code>
-      deep link. This page cannot confirm the payment actually succeeded —
-      only your UPI app / bank statement can.
+      Tapping a pay button logs this attempt (amount + note, self-reported
+      only) and opens that app via its UPI deep link. This page can't confirm
+      the payment actually succeeded — only your UPI app or bank statement can.
     </p>
   </div>
 
@@ -175,23 +342,36 @@
     return params.toString();
   }
 
+  // Quick amount chips
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.getElementById('amount').value = chip.dataset.amt;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+  document.getElementById('amount').addEventListener('input', () => {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  });
+
   // iOS has no app-chooser for custom URL schemes — a generic upi://pay
   // link just silently opens whichever app iOS happens to resolve it to.
   // So each app gets its own explicit button using its own scheme.
   const APPS = [
-    { name: "Google Pay", color: "#4285F4", scheme: "gpay://upi/pay?" },
-    { name: "PhonePe", color: "#5F259F", scheme: "phonepe://pay?" },
-    { name: "Paytm", color: "#00BAF2", scheme: "paytmmp://pay?" },
-    { name: "BHIM", color: "#00A651", scheme: "bhim://pay?" },
-    { name: "Other UPI App", color: "#6b7280", scheme: "upi://pay?" },
+    { name: "Google Pay", initials: "G", color: "#4285F4", scheme: "gpay://upi/pay?" },
+    { name: "PhonePe", initials: "P", color: "#5F259F", scheme: "phonepe://pay?" },
+    { name: "Paytm", initials: "Pt", color: "#00BAF2", scheme: "paytmmp://pay?" },
+    { name: "BHIM", initials: "B", color: "#00A651", scheme: "bhim://pay?" },
+    { name: "Other UPI App", initials: "•", color: "#6b7280", scheme: "upi://pay?" },
   ];
 
   function renderAppButtons() {
     const wrap = document.getElementById('appButtons');
-    wrap.innerHTML = APPS.map(app => `
-      <button class="app-btn" data-scheme="${app.scheme}">
-        <span class="dot" style="background:${app.color}"></span>
+    wrap.innerHTML = APPS.map((app, i) => `
+      <button type="button" class="app-btn" data-i="${i}">
+        <span class="icon" style="background:${app.color}">${app.initials}</span>
         Pay with ${app.name}
+        <span class="arrow">›</span>
       </button>
     `).join('');
     wrap.querySelectorAll('.app-btn').forEach((btn, i) => {
@@ -221,11 +401,16 @@
   renderAppButtons();
 
   document.getElementById('qrBtn').addEventListener('click', () => {
+    const amount = document.getElementById('amount').value;
+    if (!amount || parseFloat(amount) <= 0) {
+      alert("Please enter a valid amount first");
+      return;
+    }
     const link = "upi://pay?" + buildUpiLink();
     const wrap = document.getElementById('qrWrap');
     const target = document.getElementById('qrCanvas');
     target.innerHTML = '';
-    new QRCode(target, { text: link, width: 220, height: 220 });
+    new QRCode(target, { text: link, width: 200, height: 200 });
     wrap.style.display = 'block';
   });
 </script>
