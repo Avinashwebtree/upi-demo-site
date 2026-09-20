@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>UPI Pay Demo</title>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root {
     --bg: #f5f6f8;
@@ -103,6 +103,24 @@
   .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
   .divider span { padding: 0 10px; }
   .footer-note { font-size: 11px; color: var(--muted); margin-top: 20px; line-height: 1.5; }
+  .app-buttons { display: flex; flex-direction: column; gap: 10px; }
+  .app-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: white;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .app-btn:active { background: #f3f0fb; }
+  .app-btn .dot { width: 10px; height: 10px; border-radius: 50%; }
 </style>
 </head>
 <body>
@@ -120,13 +138,13 @@
     <label for="note">Note (optional)</label>
     <input type="text" id="note" placeholder="e.g. Demo payment">
 
-    <button id="payBtn">Pay with UPI App</button>
+    <div id="appButtons" class="app-buttons"></div>
 
     <div class="divider"><span>or scan QR</span></div>
     <button id="qrBtn" style="background:#111827">Show QR Code</button>
 
     <div id="qrWrap">
-      <canvas id="qrCanvas"></canvas>
+      <div id="qrCanvas" style="display:flex;justify-content:center"></div>
       <p id="qrHint">Scan with any UPI app (GPay, PhonePe, Paytm, BHIM...)</p>
     </div>
 
@@ -154,10 +172,34 @@
     if (amount && parseFloat(amount) > 0) {
       params.set("am", parseFloat(amount).toFixed(2));
     }
-    return "upi://pay?" + params.toString();
+    return params.toString();
   }
 
-  document.getElementById('payBtn').addEventListener('click', async () => {
+  // iOS has no app-chooser for custom URL schemes — a generic upi://pay
+  // link just silently opens whichever app iOS happens to resolve it to.
+  // So each app gets its own explicit button using its own scheme.
+  const APPS = [
+    { name: "Google Pay", color: "#4285F4", scheme: "gpay://upi/pay?" },
+    { name: "PhonePe", color: "#5F259F", scheme: "phonepe://pay?" },
+    { name: "Paytm", color: "#00BAF2", scheme: "paytmmp://pay?" },
+    { name: "BHIM", color: "#00A651", scheme: "bhim://pay?" },
+    { name: "Other UPI App", color: "#6b7280", scheme: "upi://pay?" },
+  ];
+
+  function renderAppButtons() {
+    const wrap = document.getElementById('appButtons');
+    wrap.innerHTML = APPS.map(app => `
+      <button class="app-btn" data-scheme="${app.scheme}">
+        <span class="dot" style="background:${app.color}"></span>
+        Pay with ${app.name}
+      </button>
+    `).join('');
+    wrap.querySelectorAll('.app-btn').forEach((btn, i) => {
+      btn.addEventListener('click', () => handlePay(APPS[i].scheme));
+    });
+  }
+
+  async function handlePay(scheme) {
     const amount = document.getElementById('amount').value;
     const note = document.getElementById('note').value;
     if (!amount || parseFloat(amount) <= 0) {
@@ -173,16 +215,17 @@
     } catch (e) {
       console.warn('Could not log transaction attempt (backend may not be running):', e);
     }
-    window.location.href = buildUpiLink();
-  });
+    window.location.href = scheme + buildUpiLink();
+  }
+
+  renderAppButtons();
 
   document.getElementById('qrBtn').addEventListener('click', () => {
-    const link = buildUpiLink();
+    const link = "upi://pay?" + buildUpiLink();
     const wrap = document.getElementById('qrWrap');
-    const canvas = document.getElementById('qrCanvas');
-    QRCode.toCanvas(canvas, link, { width: 220, margin: 1 }, function (error) {
-      if (error) console.error(error);
-    });
+    const target = document.getElementById('qrCanvas');
+    target.innerHTML = '';
+    new QRCode(target, { text: link, width: 220, height: 220 });
     wrap.style.display = 'block';
   });
 </script>
